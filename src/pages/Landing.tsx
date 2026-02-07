@@ -257,7 +257,7 @@ export function Landing() {
               <p className="text-gray-400">Created by</p>
               <p className="text-xl font-bold">
                 <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  Oluwatobiloba
+                  Oluwatobiloba Durodola
                 </span>
               </p>
             </div>
