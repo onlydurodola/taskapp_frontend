@@ -18,6 +18,14 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+// NEW: Health check for CI/CD
+export const healthApi = {
+  async checkHealth(): Promise<{status: string, database: string}> {
+    const response = await fetch(`${API_BASE_URL}/health`);
+    return handleResponse(response);
+  }
+};
+
 export const taskApi = {
   async getTasks(): Promise<Task[]> {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
