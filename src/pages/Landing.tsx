@@ -273,7 +273,7 @@ export function Landing() {
 
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
           <p>This project demonstrates full-stack development skills with React, TypeScript, Flask, and PostgreSQL.</p>
-          <p className="mt-2">Built with passion and attention to detail..</p>
+          <p className="mt-2">Built with passion and attention to detail.</p>
         </div>
       </footer>
     </div>
