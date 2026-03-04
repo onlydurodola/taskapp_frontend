@@ -72,9 +72,7 @@ jobs:
       # ------------------------------------------------------------
       - name: Deploy Nginx configuration
         run: |
-          # Substitute backend IP placeholder with actual value
-          sed "s/BACKEND_IP_PLACEHOLDER/${{ env.BACKEND_IP }}/" ./nginx-production.conf > /tmp/nginx-taskapp.conf
-
+        
           # Copy config to server
           scp -i ~/.ssh/deploy_key /tmp/nginx-taskapp.conf ${{ env.PROD_USER }}@${{ env.PROD_FRONTEND_HOST }}:/tmp/nginx-taskapp.conf
 
