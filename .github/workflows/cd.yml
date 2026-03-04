@@ -1,0 +1,67 @@
+name: CD - Deploy Frontend to Production
+
+on:
+  workflow_run:
+    workflows: ["Frontend CI"]
+    branches: [main]
+    types: [completed]
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-artifact          # Must match upload name in CI
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.PROD_FRONTEND_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          # Copy artifact to server
+          scp -i ~/.ssh/deploy_key frontend.tar.gz \
+            ubuntu@${{ secrets.PROD_FRONTEND_HOST }}:/tmp/
+
+          # Execute remote commands
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.PROD_FRONTEND_HOST }} << 'EOF'
+            set -e
+
+            TARGET_DIR="/var/www/taskapp"
+
+            # Backup current version
+            if [ -d "$TARGET_DIR" ] && [ "$(ls -A $TARGET_DIR)" ]; then
+              sudo cp -r "$TARGET_DIR" "$TARGET_DIR.backup.$(date +%s)"
+            fi
+
+            # Extract new files to a temporary location
+            sudo mkdir -p /tmp/new-frontend
+            sudo tar -xzf /tmp/frontend.tar.gz -C /tmp/new-frontend
+
+            # Atomically replace the live directory
+            sudo rm -rf "$TARGET_DIR"            # Remove old (or mv aside, but we already have backup)
+            sudo mv /tmp/new-frontend "$TARGET_DIR"
+
+            # Set ownership and permissions
+            sudo chown -R www-data:www-data "$TARGET_DIR"
+            sudo chmod -R 755 "$TARGET_DIR"
+
+            # Reload Nginx (graceful, zero downtime)
+            sudo nginx -t && sudo systemctl reload nginx
+
+            # Clean up
+            rm -f /tmp/frontend.tar.gz
+
+            # Optional: verify the site responds
+            curl -f http://localhost/ || echo "Warning: local health check failed"
+          EOF
