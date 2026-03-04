@@ -5,7 +5,7 @@ interface User {
   username: string;
   created_at: string;
 }
-
+#
 interface AuthContextType {
   user: User | null;
   token: string | null;
